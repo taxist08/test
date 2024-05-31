@@ -1,15 +1,20 @@
 # Use an official Python runtime as a parent image
 FROM python:latest
 
+# Create a non-root user and switch to that user
 RUN useradd -m myuser
-USER myuser
 
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Устанавливаем правильные права доступа
-RUN mkdir -p /app/venv && chown -R $USER /app
+# Copy the current directory contents into the container at /app
+COPY . /app
 
+# Change ownership of /app to myuser
+RUN chown -R myuser:myuser /app
+
+# Switch to non-root user
+USER myuser
 
 # Install virtualenv
 RUN pip install virtualenv
@@ -17,19 +22,13 @@ RUN pip install virtualenv
 # Create a virtual environment
 RUN python -m venv venv
 
-# Add the current directory contents into the container at /app
-COPY . /app
-
-# Install the required dependencies
-RUN /app/venv/bin/pip install -r requirements.txt
-
-
+# Activate the virtual environment and install dependencies
+RUN /app/venv/bin/pip install -r /app/requirements.txt
 
 # Make port 8088 available to the world outside this container
 EXPOSE 8088
 
-# Run clock.py when the container launches
-# CMD ["python", "clock.py"]
+# Set environment variable for Flask app
 ENV FLASK_APP=clock.py
 
 # Adjust the PATH to include the virtual environment
